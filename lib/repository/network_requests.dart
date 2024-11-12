@@ -11,9 +11,9 @@ import '../models/chat_response_model.dart';
 class NetworkRequests {
   final List<Map<String, String>> messages = [];
 
-  final String _geminiAIKey = "AIzaSyBYplFVmDHsQo9UiXvV10jyL5hluvDtgwI";
+  final String _geminiAIKey = "Gemini Key";
   final String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=';
-  final String _imageGeneratorKey = "vk-usJFHYb9BDbKjZA7TwddKys1Z33LrxfKZjAhNgAn7cnip";
+  final String _imageGeneratorKey = "Imagine API Key";
 
   Future<String> isArtPromptAPI(String prompt) async {
     try {
