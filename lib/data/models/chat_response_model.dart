@@ -7,32 +7,32 @@ class ChatResponseModel {
     return ChatResponseModel(
       candidates: json['candidates'] != null
           ? (json['candidates'] as List)
-          .map((e) => Candidate.fromJson(e))
-          .toList()
+              .map((e) => Candidate.fromJson(e))
+              .toList()
           : null,
     );
   }
 }
 
 class Candidate {
-  final Content content;
+  final ResponseContent content;
 
   Candidate({required this.content});
 
   factory Candidate.fromJson(Map<String, dynamic> json) {
     return Candidate(
-      content: Content.fromJson(json['content']),
+      content: ResponseContent.fromJson(json['content']),
     );
   }
 }
 
-class Content {
+class ResponseContent {
   final List<Part> parts;
 
-  Content({required this.parts});
+  ResponseContent({required this.parts});
 
-  factory Content.fromJson(Map<String, dynamic> json) {
-    return Content(
+  factory ResponseContent.fromJson(Map<String, dynamic> json) {
+    return ResponseContent(
       parts: (json['parts'] as List).map((e) => Part.fromJson(e)).toList(),
     );
   }

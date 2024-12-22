@@ -1,4 +1,3 @@
-
 class AppException implements Exception {
   final String? message;
   final ExceptionType? type;
@@ -9,7 +8,7 @@ class AppException implements Exception {
   });
 }
 
-enum ExceptionType{
+enum ExceptionType {
   internet,
   format,
   http,
