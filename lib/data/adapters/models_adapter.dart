@@ -25,8 +25,14 @@ class HiveChatBoxMessages extends HiveObject {
   bool isUser;
 
   @HiveField(2)
-  List<String>? visualPath;
+  List<String>? imagePath;
+
+  @HiveField(3)
+  String? filePath;
 
   HiveChatBoxMessages(
-      {required this.text, required this.isUser, this.visualPath});
+      {required this.text,
+      required this.isUser,
+      this.imagePath,
+      this.filePath});
 }

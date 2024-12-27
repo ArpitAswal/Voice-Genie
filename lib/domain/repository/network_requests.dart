@@ -9,7 +9,6 @@ import '../../utils/config.dart';
 import '../exceptions/app_exception.dart';
 
 class NetworkRequests {
-  final List<Map<String, String>> messages = [];
 
   final String _geminiAIKey = Config.geminiKey;
   final String _contentUrl = Config.geminiContentUrl;
@@ -123,4 +122,5 @@ class NetworkRequests {
       );
     }
   }
+
 }

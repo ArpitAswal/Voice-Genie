@@ -37,10 +37,11 @@ class HomeController extends GetxController {
       "".obs; // Stores the greeting message for display
   final RxString _userVoiceMsg =
       "".obs; // Stores the recognized user voice message from speech-to-text
-  final RxString imageResponse =
+  final RxString visionResponse =
       "".obs; // Store the image response that will received by gemini model
   final RxString _currentChatBoxID =
       "".obs; // to store current chat box where user send prompt
+  final RxString filePath = "".obs; // file path of selected pdf file
   final RxBool _speechEnabled =
       false.obs; // Flag to track if speech recognition is enabled
   final RxBool speechListen =
@@ -98,26 +99,23 @@ class HomeController extends GetxController {
     if (chatId != null) {
       final chat = _chatData.chatBox.get(chatId);
       chat!.title = _chatBoxTitle;
-      chat.save().then((value) => {
-            debugPrint("save: ${chat.messages.length}"),
-            totalChatBoxes.value = _chatData.getAllChatBoxes()
-          });
+      chat.save().then(
+          (value) => {totalChatBoxes.value = _chatData.getAllChatBoxes()});
     }
   }
 
-  void initializeTotalChatBoxes(
-      {required bool delete, required bool firstTime}) {
+  void initializeTotalChatBoxes({required bool firstTime}) {
     totalChatBoxes.value = _chatData.getAllChatBoxes();
-    initialAllChatBoxes.value = totalChatBoxes.length - (delete ? 1 : 0);
-    if (!firstTime) {
+    if (!firstTime && totalChatBoxes.isNotEmpty) {
       totalChatBoxes.removeLast();
     }
+    initialAllChatBoxes.value = totalChatBoxes.length;
   }
 
   Future<void> deleteChatBox({required String chatId}) async {
     bool b = await _chatData.deleteChatBox(chatId: chatId);
     if (b) {
-      initializeTotalChatBoxes(delete: true, firstTime: false);
+      initializeTotalChatBoxes(firstTime: false);
     } else {
       AlertMessages.showSnackBar(
           "Hive Error: something went wrong to deleting this ChatBox");
@@ -128,7 +126,7 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     initialize(); // Initialize greeting and speech services
-    initializeTotalChatBoxes(delete: false, firstTime: true);
+    initializeTotalChatBoxes(firstTime: true);
   }
 
   @override
@@ -180,7 +178,7 @@ class HomeController extends GetxController {
   // Initializes the message queue for speaking and starts TTS
   void playTTs() async {
     for (var message in messages) {
-      if (message.visualPath != null) _messageQueue.add(message.text);
+      if (message.imagePath != null) _messageQueue.add(message.text);
     }
     isStopped.value = false;
     _flutterTts.setCompletionHandler(_onSpeakCompleted);
@@ -189,11 +187,9 @@ class HomeController extends GetxController {
 
   // Resets conversation messages and stops both TTS and speech recognition
   void resetAll() {
-    messages.clear();
+    messages.value = [];
     _messageQueue.clear();
-    initializeTotalChatBoxes(delete: false, firstTime: true);
-    _chatBoxTitle = "";
-    isTextPrompt.value = false;
+    initializeTotalChatBoxes(firstTime: true);
     isImagePrompt.value = false;
     isNewPrompt.value = true;
     checkAlreadyCreated();
@@ -271,7 +267,7 @@ class HomeController extends GetxController {
         messages.add(HiveChatBoxMessages(
           text: input,
           isUser: true,
-          visualPath: null,
+          imagePath: null,
         ));
         isLoading.value = true;
 
@@ -292,6 +288,7 @@ class HomeController extends GetxController {
             isUser: true));
         _messageQueue.add(
             "Please provide me with some context or a question so I can assist you.");
+        shouldTextAnimate.value = true;
         messages.add(HiveChatBoxMessages(
             text: "For example: Give me some Interview Tips.", isUser: false));
         _messageQueue.add("For example: Give me some Interview Tips.");
@@ -314,10 +311,12 @@ class HomeController extends GetxController {
 
     if (imagesFileList.isNotEmpty) {
       messages.add(HiveChatBoxMessages(
-        text: prompt,
-        isUser: true,
-        visualPath: List<String>.from(imagesFileList),
-      ));
+          text: prompt,
+          isUser: true,
+          imagePath: (imagesFileList.isNotEmpty)
+              ? List<String>.from(imagesFileList)
+              : null,
+          filePath: null));
       isLoading.value = true;
     }
 
@@ -326,17 +325,18 @@ class HomeController extends GetxController {
           await _generateContent.execute(
               prompt: prompt,
               history: await getHistoryMessages(),
-              message: (prompt.isEmpty) ? "Describe the images" : prompt,
               isTextOnly: imagesFileList.isEmpty,
               images: imagesFileList.map((image) => XFile(image)).toList());
       response.listen((event) {
-        imageResponse.value += event.text.toString();
+        visionResponse.value += event.text.toString();
       }, onDone: () async {
         isLoading.value = false; // Ends loading state
-        messages
-            .add(HiveChatBoxMessages(text: imageResponse.value, isUser: false));
-        speakTTs(imageResponse.value);
-        imageResponse.value = "";
+        if (visionResponse.value.isNotEmpty) {
+          messages.add(
+              HiveChatBoxMessages(text: visionResponse.value, isUser: false));
+        }
+        speakTTs(visionResponse.value);
+        visionResponse.value = "";
         if (isNewPrompt.value &&
             messages.length == 2 &&
             _chatBoxTitle.isEmpty) {
@@ -366,8 +366,8 @@ class HomeController extends GetxController {
       messages.add(HiveChatBoxMessages(
           text: "Here, is a comprehensive desire image output of your prompt.",
           isUser: false));
-      messages.add(
-          HiveChatBoxMessages(text: "", isUser: false, visualPath: [data]));
+      messages.add(HiveChatBoxMessages(
+          text: "", isUser: false, imagePath: [data], filePath: null));
       if (isNewPrompt.value && messages.length == 3 && _chatBoxTitle.isEmpty) {
         setChatBoxTitle();
       }
@@ -392,20 +392,20 @@ class HomeController extends GetxController {
       if (history != null) {
         Content content;
         for (var data in history) {
-          content = (data.isUser && data.visualPath == null)
+          content = (data.isUser && data.imagePath == null)
               ? Content("user", [TextPart(data.text)])
-              : (data.isUser && data.visualPath != null)
+              : (data.isUser && data.imagePath != null)
                   ? Content("user", [
-                      ...await getDataPartList(data.visualPath!
+                      ...await getDataPartList(data.imagePath!
                           .map((value) => XFile(value))
                           .toList()),
                       TextPart(data.text)
                     ])
-                  : (!data.isUser && data.visualPath == null)
+                  : (!data.isUser && data.imagePath == null)
                       ? Content("model", [TextPart(data.text)])
                       : Content(
                           "model",
-                          await getDataPartList(data.visualPath!
+                          await getDataPartList(data.imagePath!
                               .map((value) => XFile(value))
                               .toList()));
           result.add(content);
@@ -437,6 +437,7 @@ class HomeController extends GetxController {
       isTextPrompt.value = true;
     } else {
       setCurrentChatId(newChatId: DateTime.now().toIso8601String());
+      _chatBoxTitle = "";
       setGreeting();
       isTextPrompt.value = false;
       messages.value = [];
@@ -444,24 +445,31 @@ class HomeController extends GetxController {
   }
 
   Future<void> pickImage() async {
-    isTextPrompt.value = true;
-    isImagePrompt.value = true;
-    final pickedImages = await ImagePicker().pickMultiImage(
-        maxHeight: 800, maxWidth: 800, imageQuality: 95, limit: 4);
+    final pickedImages = await ImagePicker()
+        .pickMultiImage(maxHeight: 800, maxWidth: 800, imageQuality: 100);
     if (pickedImages.isNotEmpty) {
+      isImagePrompt.value = true;
+      isTextPrompt.value = true;
       imagesFileList.value = pickedImages.map((image) => image.path).toList();
-    } else {
-      isTextPrompt.value = false;
-      isImagePrompt.value = false;
-    }
+      if (filePath.value.isNotEmpty) {
+        filePath.value = "";
+      }
+    } else {}
   }
 
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-        allowMultiple: true, type: FileType.custom, allowedExtensions: ['pdf']);
+        allowMultiple: false,
+        type: FileType.custom,
+        allowedExtensions: ['pdf']);
 
     if (result != null) {
-      List<File> files = result.paths.map((path) => File(path!)).toList();
+      isImagePrompt.value = true;
+      isTextPrompt.value = true;
+      filePath.value = result.files.single.path!;
+      if (imagesFileList.isNotEmpty) {
+        imagesFileList.value = [];
+      }
     } else {
       // User canceled the picker
     }
@@ -494,6 +502,39 @@ class HomeController extends GetxController {
       greetingMessage.value = "Good Afternoon";
     } else {
       greetingMessage.value = "Good Evening";
+    }
+  }
+
+  Future<void> uploadPdf(String text) async {
+    isImagePrompt.value = false;
+    final fileName = filePath.value.split('/').last.split('-').last;
+    messages.add(HiveChatBoxMessages(
+        text: fileName,
+        isUser: true,
+        imagePath: null,
+        filePath: (filePath.isNotEmpty) ? filePath.value : null));
+    isLoading.value = true;
+
+    try {
+      final response = await _generateContent.sendPromptFile(
+          prompt: text, file: File(filePath.value), fileName: fileName);
+      if (response.isNotEmpty) {
+        isLoading.value = false;
+        messages.add(HiveChatBoxMessages(text: response, isUser: false));
+        speakTTs(response);
+        if (isNewPrompt.value &&
+            messages.length == 2 &&
+            _chatBoxTitle.isEmpty) {
+          setChatBoxTitle();
+        }
+        saveMessagesInDB();
+      }
+    } catch (e) {
+      isLoading.value = false;
+      AlertMessages.showSnackBar(e.toString());
+      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+    } finally {
+      filePath.value = "";
     }
   }
 }

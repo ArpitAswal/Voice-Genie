@@ -121,49 +121,54 @@ class AlertMessages {
     );
   }
 
-  static void getStoragePermission(
-      BuildContext context, HomeController controller) async {
+  static Future<bool> getStoragePermission() async {
     var status = await Permission.storage.status;
     if (status.isGranted) {
-      controller.pickImage();
+      return true;
     } else if (status.isDenied) {
       status = await Permission.storage.request();
       if (status.isGranted) {
-        controller.pickImage();
+        return true;
+      } else {
+        return false;
       }
-    } else if (status.isPermanentlyDenied) {
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return AlertDialog(
-              elevation: 8,
-              shadowColor: Colors.grey,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.0),
-              ),
-              title: const Text("Photos Permission"),
-              content: const Text(
-                  "Allow the permission to access photos from device gallery."),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0)
-                  .copyWith(bottom: 0),
-              actionsPadding: const EdgeInsets.symmetric(vertical: 0),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Cancel")),
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      openAppSettings();
-                    },
-                    child: const Text("Allow"))
-              ],
-            );
-          });
+    } else {
+      return false;
     }
+  }
+
+  static Future<void> alertPermission(BuildContext context) async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            elevation: 8,
+            shadowColor: Colors.grey,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.0),
+            ),
+            title: const Text("Storage Permission"),
+            content: const Text(
+                "Allow the permission to access photos/files from device storage."),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0)
+                .copyWith(bottom: 0),
+            actionsPadding: const EdgeInsets.symmetric(vertical: 0),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel")),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    openAppSettings();
+                  },
+                  child: const Text("Allow"))
+            ],
+          );
+        });
   }
 
   static Future<dynamic> titleDialog(TextEditingController textController,
@@ -279,6 +284,7 @@ class AlertMessages {
                   child: const Text('YES'),
                   onPressed: () {
                     Get.find<HomeController>().deleteChatBox(chatId: promptId);
+                    Navigator.of(context).pop();
                   }),
             ],
           ),

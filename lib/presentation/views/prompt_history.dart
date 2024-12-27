@@ -5,11 +5,11 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:voice_assistant/data/adapters/models_adapter.dart';
 import 'package:voice_assistant/presentation/controllers/home_controller.dart';
-import 'package:voice_assistant/utils/alert_messages.dart';
 import 'package:voice_assistant/widgets/prompt_container.dart';
 import 'package:voice_assistant/widgets/prompt_messages.dart';
 import 'package:voice_assistant/widgets/virtual_assistant_image.dart';
 
+import '../../widgets/image_prompt.dart';
 import '../../widgets/multiple_floating.dart';
 
 class PromptHistoryScreen extends StatefulWidget {
@@ -57,7 +57,7 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
           _scrollController.position.maxScrollExtent > 0.0) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 1),
           curve: Curves.easeOut,
         );
       }
@@ -88,7 +88,9 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
               Icons.attach_file,
               color: Colors.white,
             ),
-            onPressed: widget.ctrl.pickFile,
+            onPressed: () {
+              widget.ctrl.pickFile();
+            },
           ),
           IconButton(
             icon: const Icon(
@@ -96,7 +98,7 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
               color: Colors.white,
             ),
             onPressed: () {
-              AlertMessages.getStoragePermission(context, widget.ctrl);
+              widget.ctrl.pickImage();
             },
           )
         ],
@@ -122,28 +124,36 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
             height: Get.height * 0.02,
           ),
           const VirtualAssistantImage(),
-          PromptContainer(child: Obx(() {
-            Future.microtask(_scrollToBottom);
-            return (widget.ctrl.messages.isEmpty)
-                ? Align(
-                    alignment: Alignment.centerRight,
-                    child: LoadingAnimationWidget.progressiveDots(
-                        color: Colors.grey.shade400, size: 40))
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PromptMessagesWidget(
-                          ctrl: widget.ctrl, message: widget.ctrl.messages),
-                      (widget.ctrl.isLoading.value)
-                          ? Align(
-                              alignment: Alignment.centerLeft,
-                              child: LoadingAnimationWidget.progressiveDots(
-                                  color: Colors.grey.shade400, size: 40),
-                            )
-                          : const SizedBox.shrink()
-                    ],
-                  );
-          })),
+          Obx(() {
+            if (widget.ctrl.isImagePrompt.value) {
+              return const ImagePrompt();
+            } else {
+              Future.microtask(_scrollToBottom);
+              return PromptContainer(
+                  child: (widget.ctrl.messages.isEmpty)
+                      ? Align(
+                          alignment: Alignment.centerRight,
+                          child: LoadingAnimationWidget.progressiveDots(
+                              color: Colors.grey.shade400, size: 40))
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PromptMessagesWidget(
+                                ctrl: widget.ctrl,
+                                message: widget.ctrl.messages),
+                            (widget.ctrl.isLoading.value)
+                                ? Align(
+                                    alignment: Alignment.centerLeft,
+                                    child:
+                                        LoadingAnimationWidget.progressiveDots(
+                                            color: Colors.grey.shade400,
+                                            size: 40),
+                                  )
+                                : const SizedBox.shrink()
+                          ],
+                        ));
+            }
+          }),
         ]),
       ),
     );

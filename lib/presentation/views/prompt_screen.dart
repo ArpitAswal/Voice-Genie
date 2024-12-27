@@ -37,7 +37,7 @@ class _PromptScreenState extends State<PromptScreen> {
           _scrollController.position.maxScrollExtent > 0.0) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 1),
           curve: Curves.easeOut,
         );
       }

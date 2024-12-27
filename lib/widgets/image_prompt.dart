@@ -26,6 +26,8 @@ class _ImagePromptState extends State<ImagePrompt> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    ctrl.imagesFileList.clear();
+    ctrl.filePath.value = "";
     WidgetsBinding.instance.removeObserver(this);
     editController.dispose();
     textFieldFocus.dispose();
@@ -45,6 +47,7 @@ class _ImagePromptState extends State<ImagePrompt> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return PromptContainer(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const PreviewImages(),
           TextFormField(
@@ -64,21 +67,23 @@ class _ImagePromptState extends State<ImagePrompt> with WidgetsBindingObserver {
                 focusedBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black45, width: 2)),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                hintText: "Describe the images?",
+                    const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
+                hintText: "prompt...",
                 filled: true,
                 fillColor: Colors.grey.shade200,
                 hintStyle: const TextStyle(
                     fontFamily: 'Cera', color: Colors.black54, fontSize: 16),
                 suffix: InkWell(
                     onTap: () {
-                      (ctrl.imagesFileList.isEmpty)
+                      (ctrl.imagesFileList.isEmpty && ctrl.filePath.isEmpty)
                           ? AlertMessages.showSnackBar(
-                              "Add at least one image.")
+                              "Add at least one image/file.")
                           : (editController.text.isEmpty)
                               ? AlertMessages.showSnackBar(
-                                  "write the prompt for images.")
-                              : ctrl.sendPrompt(editController.text);
+                                  "write the prompt for images/files")
+                              : (ctrl.imagesFileList.isNotEmpty)
+                                  ? ctrl.sendPrompt(editController.text)
+                                  : ctrl.uploadPdf(editController.text);
                       editController.clear();
                     },
                     child: const Icon(Icons.send_rounded))),

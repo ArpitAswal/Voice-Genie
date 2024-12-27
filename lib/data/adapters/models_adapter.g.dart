@@ -59,20 +59,23 @@ class HiveChatBoxMessagesAdapter extends TypeAdapter<HiveChatBoxMessages> {
     return HiveChatBoxMessages(
       text: fields[0] as String,
       isUser: fields[1] as bool,
-      visualPath: (fields[2] as List?)?.cast<String>(),
+      imagePath: (fields[2] as List?)?.cast<String>(),
+      filePath: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveChatBoxMessages obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.text)
       ..writeByte(1)
       ..write(obj.isUser)
       ..writeByte(2)
-      ..write(obj.visualPath);
+      ..write(obj.imagePath)
+      ..writeByte(3)
+      ..write(obj.filePath);
   }
 
   @override

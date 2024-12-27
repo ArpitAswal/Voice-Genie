@@ -35,8 +35,14 @@ class HomeScreen extends StatelessWidget {
                     Icons.attach_file,
                     color: Colors.white,
                   ),
-                  onPressed: controller.pickFile,
-                )
+                  onPressed: () async {
+                    bool b = await AlertMessages.getStoragePermission();
+                    if (b) {
+                      controller.pickFile();
+                    } else {
+                      AlertMessages.alertPermission(context);
+                    }
+                  })
               : const SizedBox.shrink()),
           Obx(() => (controller.currentIndex.value == 0)
               ? IconButton(
@@ -44,8 +50,13 @@ class HomeScreen extends StatelessWidget {
                     Icons.photo_library,
                     color: Colors.white,
                   ),
-                  onPressed: () {
-                    AlertMessages.getStoragePermission(context, controller);
+                  onPressed: () async {
+                    bool b = await AlertMessages.getStoragePermission();
+                    if (b) {
+                      controller.pickImage();
+                    } else {
+                      AlertMessages.alertPermission(context);
+                    }
                   })
               : const SizedBox.shrink())
         ],
