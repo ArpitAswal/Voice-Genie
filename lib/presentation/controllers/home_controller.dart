@@ -30,9 +30,10 @@ class HomeController extends GetxController {
   final GenerateContentUseCase _generateContent;
 
   // Observable variables for UI updates
-  final RxInt currentIndex = 0.obs; // to update the index of pages
-  final RxInt initialAllChatBoxes = 0
-      .obs; // indicate how many chat boxes already created whenever the app start
+  final RxInt currentIndex =
+      0.obs; // to update the index of pages
+  final RxInt initialAllChatBoxes =
+      0.obs; // indicate how many chat boxes already created whenever the app start
   final RxString greetingMessage =
       "".obs; // Stores the greeting message for display
   final RxString _userVoiceMsg =
@@ -41,7 +42,8 @@ class HomeController extends GetxController {
       "".obs; // Store the image response that will received by gemini model
   final RxString _currentChatBoxID =
       "".obs; // to store current chat box where user send prompt
-  final RxString filePath = "".obs; // file path of selected pdf file
+  final RxString filePath =
+      "".obs; // file path of selected pdf file
   final RxBool _speechEnabled =
       false.obs; // Flag to track if speech recognition is enabled
   final RxBool speechListen =
@@ -56,8 +58,8 @@ class HomeController extends GetxController {
       false.obs; // Flag to indicate the response text should re animate or not
   final RxBool isStopped =
       true.obs; // Flag to determine if text-to-speech should stop
-  final RxBool isNewPrompt = true
-      .obs; // Flag to determine whether current prompt is new or old chat prompt
+  final RxBool isNewPrompt =
+      true.obs; // Flag to determine whether current prompt is new or old chat prompt
   final RxList<HiveChatBoxMessages> messages =
       <HiveChatBoxMessages>[].obs; // List to hold conversation messages
   final RxList<HiveChatBox> totalChatBoxes =
@@ -178,7 +180,7 @@ class HomeController extends GetxController {
   // Initializes the message queue for speaking and starts TTS
   void playTTs() async {
     for (var message in messages) {
-      if (message.imagePath != null) _messageQueue.add(message.text);
+      if (message.imagePath == null && message.filePath == null) _messageQueue.add(message.text);
     }
     isStopped.value = false;
     _flutterTts.setCompletionHandler(_onSpeakCompleted);
@@ -288,6 +290,8 @@ class HomeController extends GetxController {
             isUser: true));
         _messageQueue.add(
             "Please provide me with some context or a question so I can assist you.");
+        isStopped.value = false;
+        await _speakNextMessage();
         shouldTextAnimate.value = true;
         messages.add(HiveChatBoxMessages(
             text: "For example: Give me some Interview Tips.", isUser: false));
@@ -334,9 +338,9 @@ class HomeController extends GetxController {
         if (visionResponse.value.isNotEmpty) {
           messages.add(
               HiveChatBoxMessages(text: visionResponse.value, isUser: false));
+          speakTTs(visionResponse.value);
+          visionResponse.value = "";
         }
-        speakTTs(visionResponse.value);
-        visionResponse.value = "";
         if (isNewPrompt.value &&
             messages.length == 2 &&
             _chatBoxTitle.isEmpty) {
@@ -347,7 +351,8 @@ class HomeController extends GetxController {
       }).onError((error, stackTrace) {
         isLoading.value = false; // Ends loading state
         AlertMessages.showSnackBar(error.toString());
-        messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+        messages.add(HiveChatBoxMessages(text: error.toString(), isUser: false));
+        speakTTs(error.toString());
       });
     } catch (e) {
       isLoading.value = false;
@@ -364,11 +369,9 @@ class HomeController extends GetxController {
       final data = await _service.imagineAPI(input);
       isLoading.value = false;
       messages.add(HiveChatBoxMessages(
-          text: "Here, is a comprehensive desire image output of your prompt.",
-          isUser: false));
-      messages.add(HiveChatBoxMessages(
-          text: "", isUser: false, imagePath: [data], filePath: null));
-      if (isNewPrompt.value && messages.length == 3 && _chatBoxTitle.isEmpty) {
+          text: "Here, is a comprehensive desire image output of your prompt.", isUser: false, imagePath: [data], filePath: null));
+      speakTTs("Here, is a comprehensive desire image output of your prompt.");
+      if (isNewPrompt.value && messages.length == 2 && _chatBoxTitle.isEmpty) {
         setChatBoxTitle();
       }
       saveMessagesInDB();
@@ -454,7 +457,7 @@ class HomeController extends GetxController {
       if (filePath.value.isNotEmpty) {
         filePath.value = "";
       }
-    } else {}
+    }
   }
 
   Future<void> pickFile() async {
@@ -470,8 +473,6 @@ class HomeController extends GetxController {
       if (imagesFileList.isNotEmpty) {
         imagesFileList.value = [];
       }
-    } else {
-      // User canceled the picker
     }
   }
 

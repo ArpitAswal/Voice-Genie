@@ -26,104 +26,123 @@ class PromptMessagesWidget extends StatelessWidget {
         final isLastMessage = index == message.length - 1;
 
         if (msg.isUser && (msg.imagePath != null || msg.filePath != null)) {
-          return Align(
-            alignment: Alignment.centerRight,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                      width: (msg.imagePath != null &&
-                              msg.imagePath!.length == 1)
-                          ? width * 0.25
-                          : (msg.filePath != null && msg.filePath!.length == 1)
-                              ? width * 0.25
-                              : width * 0.5,
-                      margin: const EdgeInsets.only(bottom: 12.0),
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.grey,
-                            spreadRadius: 1.0,
-                            blurRadius: 6.0,
-                          ),
-                        ],
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.shade300,
-                            Colors.lightGreenAccent.shade100
-                          ],
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                    width: (msg.imagePath != null && msg.imagePath!.length == 1)
+                        ? width * 0.25
+                        : (msg.filePath != null)
+                            ? width * 0.25
+                            : width * 0.5,
+                    margin: const EdgeInsets.only(bottom: 12.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          spreadRadius: 1.0,
+                          blurRadius: 6.0,
                         ),
-                        borderRadius: BorderRadius.circular(24).copyWith(
-                            topLeft: Radius.zero, bottomRight: Radius.zero),
+                      ],
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue.shade300,
+                          Colors.lightGreenAccent.shade100
+                        ],
                       ),
-                      child: (msg.imagePath != null)
-                          ? ImageGridView(images: msg.imagePath!)
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: width * 0.015,
+                      borderRadius: BorderRadius.circular(24).copyWith(
+                          topLeft: Radius.zero, bottomRight: Radius.zero),
+                    ),
+                    child: (msg.imagePath != null)
+                        ? ImageGridView(images: msg.imagePath!)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: width * 0.015,
+                              ),
+                              Icon(
+                                Icons.picture_as_pdf,
+                                color: Colors.red.shade300,
+                                size: 30,
+                              ),
+                              SizedBox(
+                                width: width * 0.015,
+                              ),
+                              Flexible(
+                                child: Text(
+                                  ctrl.filePath.value
+                                      .split('/')
+                                      .last
+                                      .split('-')
+                                      .last,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontFamily: "Cera"),
                                 ),
-                                Icon(
-                                  Icons.picture_as_pdf,
-                                  color: Colors.red.shade300,
-                                  size: 30,
-                                ),
-                                SizedBox(
-                                  width: width * 0.015,
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    ctrl.filePath.value
-                                        .split('/')
-                                        .last
-                                        .split('-')
-                                        .last,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: "Cera"),
-                                  ),
-                                ),
-                              ],
-                            )),
+                              ),
+                            ],
+                          )),
+              ),
+              Text(
+                "Prompt: ${msg.text}",
+                softWrap: true,
+                style: const TextStyle(
+                  fontFamily: 'Cera',
+                  color: Colors.black87,
+                  fontSize: 16,
                 ),
-                Text(
-                  "Prompt: ${msg.text}",
-                  softWrap: true,
-                  style: const TextStyle(
-                    fontFamily: 'Cera',
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         } else {
-          return (isLastMessage && ctrl.shouldTextAnimate.value)
-              ? AnimatedTextKit(
-                  onFinished: () {
-                    ctrl.shouldTextAnimate.value = false;
-                  },
-                  onTap: () {
-                    ctrl.shouldTextAnimate.value = false;
-                  },
-                  displayFullTextOnTap: true,
-                  animatedTexts: [
-                    TyperAnimatedText(
-                      speed: const Duration(milliseconds: 55),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              (isLastMessage && ctrl.shouldTextAnimate.value)
+                  ? AnimatedTextKit(
+                      onFinished: () {
+                        ctrl.shouldTextAnimate.value = false;
+                      },
+                      onTap: () {
+                        ctrl.shouldTextAnimate.value = false;
+                      },
+                      displayFullTextOnTap: true,
+                      animatedTexts: [
+                        TyperAnimatedText(
+                          speed: const Duration(milliseconds: 55),
+                          msg.isUser
+                              ? "Prompt: ${msg.text}"
+                              : "Response: ${msg.text}",
+                          textStyle: TextStyle(
+                            fontFamily: 'Cera',
+                            color: msg.isUser
+                                ? Colors.black87
+                                : (msg.text == "Failed")
+                                    ? Colors.red
+                                    : Colors.grey,
+                            fontSize: 16,
+                          ),
+                          textAlign: (!msg.isUser && msg.text == "Failed")
+                              ? TextAlign.end
+                              : TextAlign.start,
+                        ),
+                      ],
+                      isRepeatingAnimation: false,
+                    )
+                  : Text(
                       msg.isUser
                           ? "Prompt: ${msg.text}"
                           : "Response: ${msg.text}",
-                      textStyle: TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Cera',
                         color: msg.isUser
                             ? Colors.black87
@@ -136,24 +155,35 @@ class PromptMessagesWidget extends StatelessWidget {
                           ? TextAlign.end
                           : TextAlign.start,
                     ),
-                  ],
-                  isRepeatingAnimation: false,
-                )
-              : Text(
-                  msg.isUser ? "Prompt: ${msg.text}" : "Response: ${msg.text}",
-                  style: TextStyle(
-                    fontFamily: 'Cera',
-                    color: msg.isUser
-                        ? Colors.black87
-                        : (msg.text == "Failed")
-                            ? Colors.red
-                            : Colors.grey,
-                    fontSize: 16,
-                  ),
-                  textAlign: (!msg.isUser && msg.text == "Failed")
-                      ? TextAlign.end
-                      : TextAlign.start,
-                );
+              if (msg.imagePath != null)
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                        width: width * 0.5,
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.grey,
+                              spreadRadius: 1.0,
+                              blurRadius: 6.0,
+                            ),
+                          ],
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.blue.shade300,
+                              Colors.lightGreenAccent.shade100
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24).copyWith(
+                              topLeft: Radius.zero, bottomRight: Radius.zero),
+                        ),
+                        child: ImageGridView(images: msg.imagePath!)))
+            ],
+          );
         }
       }).toList(),
     );
