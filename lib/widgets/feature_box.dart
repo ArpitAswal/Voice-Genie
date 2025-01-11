@@ -32,6 +32,7 @@ class FeatureBox extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 10.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -46,15 +47,12 @@ class FeatureBox extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Text(
-                descriptionText,
-                style: const TextStyle(
-                    fontFamily: 'Cera',
-                    color: Colors.black54,
-                    fontStyle: FontStyle.italic),
-              ),
+            Text(
+              descriptionText,
+              style: const TextStyle(
+                  fontFamily: 'Cera',
+                  color: Colors.black54,
+                  fontStyle: FontStyle.italic),
             ),
           ],
         ),
