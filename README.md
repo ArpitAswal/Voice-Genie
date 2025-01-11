@@ -2,7 +2,7 @@
 ## App Logo
 Click on a logo to download the latest version of the app apk file:
   
-<a href="https://github.com/ArpitAswal/Voice-Genie/releases/download/v1.0.0/VoiceGenie.apk"> ![ic_launcher](https://github.com/user-attachments/assets/ae14f7dc-567c-4074-b86a-81aca50c71b0)</a>
+<a href="https://github.com/ArpitAswal/Voice-Genie/releases/download/v2.00/VoiceGenie.apk"> ![ic_launcher](https://github.com/user-attachments/assets/ae14f7dc-567c-4074-b86a-81aca50c71b0)</a>
 
 # Project Title: Voice Genie
 
