@@ -77,7 +77,7 @@ class _PromptScreenState extends State<PromptScreen> {
                 duration: const Duration(milliseconds: 600),
                 child: Obx(() => (ctrl.isImagePrompt.value)
                     ? const ImagePrompt()
-                    : (!ctrl.isTextPrompt.value && ctrl.messages.isEmpty)
+                    : (!ctrl.isTextPrompt.value)
                         ? initialPrompt()
                         : promptSpace())),
             Obx(

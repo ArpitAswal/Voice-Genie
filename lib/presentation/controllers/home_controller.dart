@@ -30,10 +30,9 @@ class HomeController extends GetxController {
   final GenerateContentUseCase _generateContent;
 
   // Observable variables for UI updates
-  final RxInt currentIndex =
-      0.obs; // to update the index of pages
-  final RxInt initialAllChatBoxes =
-      0.obs; // indicate how many chat boxes already created whenever the app start
+  final RxInt currentIndex = 0.obs; // to update the index of pages
+  final RxInt initialAllChatBoxes = 0
+      .obs; // indicate how many chat boxes already created whenever the app start
   final RxString greetingMessage =
       "".obs; // Stores the greeting message for display
   final RxString _userVoiceMsg =
@@ -42,8 +41,7 @@ class HomeController extends GetxController {
       "".obs; // Store the image response that will received by gemini model
   final RxString _currentChatBoxID =
       "".obs; // to store current chat box where user send prompt
-  final RxString filePath =
-      "".obs; // file path of selected pdf file
+  final RxString filePath = "".obs; // file path of selected pdf file
   final RxBool _speechEnabled =
       false.obs; // Flag to track if speech recognition is enabled
   final RxBool speechListen =
@@ -58,8 +56,8 @@ class HomeController extends GetxController {
       false.obs; // Flag to indicate the response text should re animate or not
   final RxBool isStopped =
       true.obs; // Flag to determine if text-to-speech should stop
-  final RxBool isNewPrompt =
-      true.obs; // Flag to determine whether current prompt is new or old chat prompt
+  final RxBool isNewPrompt = true
+      .obs; // Flag to determine whether current prompt is new or old chat prompt
   final RxList<HiveChatBoxMessages> messages =
       <HiveChatBoxMessages>[].obs; // List to hold conversation messages
   final RxList<HiveChatBox> totalChatBoxes =
@@ -72,6 +70,8 @@ class HomeController extends GetxController {
       PageController(); // PageView controller
   final List<String> _messageQueue =
       []; // Queue for storing messages to be spoken by text-to-speech
+  late List<String> _chunks =
+      []; //to store large text into chunks to be spoken by text-to-speech
   String _chatBoxTitle = ""; // to store the title of new prompt chat box
 
   HomeController({
@@ -108,7 +108,7 @@ class HomeController extends GetxController {
 
   void initializeTotalChatBoxes({required bool firstTime}) {
     totalChatBoxes.value = _chatData.getAllChatBoxes();
-    if (!firstTime && totalChatBoxes.isNotEmpty) {
+    if (!firstTime && totalChatBoxes.isNotEmpty && isTextPrompt.value) {
       totalChatBoxes.removeLast();
     }
     initialAllChatBoxes.value = totalChatBoxes.length;
@@ -177,13 +177,20 @@ class HomeController extends GetxController {
     }
   }
 
+  void _onChunkCompleted() {
+    if (!isStopped.value) {
+      _speakChunks(); // Speak the next message if not stopped
+    }
+  }
+
   // Initializes the message queue for speaking and starts TTS
   void playTTs() async {
     for (var message in messages) {
-      if (message.imagePath == null && message.filePath == null) _messageQueue.add(message.text);
+      if (message.text.isNotEmpty) {
+        _messageQueue.add(message.text);
+      }
     }
     isStopped.value = false;
-    _flutterTts.setCompletionHandler(_onSpeakCompleted);
     await _speakNextMessage(); // Begins speaking messages in the queue
   }
 
@@ -216,11 +223,35 @@ class HomeController extends GetxController {
   // Speaks the next message in the queue if available
   Future<void> _speakNextMessage() async {
     if (_messageQueue.isNotEmpty && !isStopped.value) {
-      await _flutterTts
-          .speak(_messageQueue.removeAt(0)); // Speaks the next message in queue
+      if (_messageQueue.elementAt(0).length > 4000) {
+        _chunks = _splitTextIntoChunks(_messageQueue.removeAt(0), 4000);
+        _flutterTts.setCompletionHandler(_onChunkCompleted);
+        await _speakChunks();
+      } else {
+        await _flutterTts.speak(_messageQueue.removeAt(0));
+      } // Speaks the next message in queue
     } else {
-      isStopped.value = true; // Sets stopped flag when queue is empty
+      stopTTs();
     }
+  }
+
+  Future<void> _speakChunks() async {
+    if (_chunks.isNotEmpty) {
+      debugPrint("chunks speak");
+      await _flutterTts.speak(_chunks.removeAt(0));
+    } else {
+      debugPrint("chunks finished");
+      _speakNextMessage();
+    }
+  }
+
+  List<String> _splitTextIntoChunks(String text, int chunkSize) {
+    final List<String> chunks = [];
+    for (int i = 0; i < text.length; i += chunkSize) {
+      chunks.add(text.substring(
+          i, i + chunkSize > text.length ? text.length : i + chunkSize));
+    }
+    return chunks;
   }
 
   // Adds a message to the queue and starts TTS
@@ -230,7 +261,7 @@ class HomeController extends GetxController {
     await _speakNextMessage();
   }
 
-  // Adds a message to the queue and starts TTS
+  // stop speaking the queue messages or complete speaking
   Future<void> stopTTs() async {
     isStopped.value = true;
     await _flutterTts.stop();
@@ -267,10 +298,7 @@ class HomeController extends GetxController {
       isTextPrompt.value = true;
       if (input.isNotEmpty) {
         messages.add(HiveChatBoxMessages(
-          text: input,
-          isUser: true,
-          imagePath: null,
-        ));
+            text: input, isUser: true, imagePath: null, filePath: null));
         isLoading.value = true;
 
         final response = await _service.isArtPromptAPI(input);
@@ -296,8 +324,12 @@ class HomeController extends GetxController {
         messages.add(HiveChatBoxMessages(
             text: "For example: Give me some Interview Tips.", isUser: false));
         _messageQueue.add("For example: Give me some Interview Tips.");
-        isStopped.value = false;
-        await _speakNextMessage();
+        if (isNewPrompt.value &&
+            messages.length == 2 &&
+            _chatBoxTitle.isEmpty) {
+          setChatBoxTitle();
+        }
+        saveMessagesInDB();
       }
     } on AppException catch (e) {
       isLoading.value = false;
@@ -351,7 +383,8 @@ class HomeController extends GetxController {
       }).onError((error, stackTrace) {
         isLoading.value = false; // Ends loading state
         AlertMessages.showSnackBar(error.toString());
-        messages.add(HiveChatBoxMessages(text: error.toString(), isUser: false));
+        messages
+            .add(HiveChatBoxMessages(text: error.toString(), isUser: false));
         speakTTs(error.toString());
       });
     } catch (e) {
@@ -369,7 +402,10 @@ class HomeController extends GetxController {
       final data = await _service.imagineAPI(input);
       isLoading.value = false;
       messages.add(HiveChatBoxMessages(
-          text: "Here, is a comprehensive desire image output of your prompt.", isUser: false, imagePath: [data], filePath: null));
+          text: "Here, is a comprehensive desire image output of your prompt.",
+          isUser: false,
+          imagePath: [data],
+          filePath: null));
       speakTTs("Here, is a comprehensive desire image output of your prompt.");
       if (isNewPrompt.value && messages.length == 2 && _chatBoxTitle.isEmpty) {
         setChatBoxTitle();
@@ -510,10 +546,10 @@ class HomeController extends GetxController {
     isImagePrompt.value = false;
     final fileName = filePath.value.split('/').last.split('-').last;
     messages.add(HiveChatBoxMessages(
-        text: fileName,
+        text: text,
         isUser: true,
         imagePath: null,
-        filePath: (filePath.isNotEmpty) ? filePath.value : null));
+        filePath: (filePath.isNotEmpty) ? fileName : null));
     isLoading.value = true;
 
     try {

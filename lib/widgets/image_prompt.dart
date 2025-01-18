@@ -31,6 +31,7 @@ class _ImagePromptState extends State<ImagePrompt> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     editController.dispose();
     textFieldFocus.dispose();
+    ctrl.isImagePrompt.value = false;
     super.dispose();
   }
 

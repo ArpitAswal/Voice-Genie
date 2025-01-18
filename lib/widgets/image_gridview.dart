@@ -9,6 +9,7 @@ class ImageGridView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+
     if (images.length == 1) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16.0),
@@ -23,13 +24,14 @@ class ImageGridView extends StatelessWidget {
         shrinkWrap: true,
         mainAxisSpacing: 6.0,
         crossAxisSpacing: 6.0,
-        crossAxisCount: (images.length % 2 == 0 || images.length == 3) ? 2 : 3,
+        crossAxisCount: (images.length <= 4) ? 2 : 3,
+        childAspectRatio: 0.85,
         children: images
             .map(
               (image) => ClipRRect(
                 borderRadius: BorderRadius.circular(10.0),
                 child: Image.file(
-                  height: height * 0.25,
+                  height: height * 0.5,
                   fit: BoxFit.cover,
                   File(image),
                 ),

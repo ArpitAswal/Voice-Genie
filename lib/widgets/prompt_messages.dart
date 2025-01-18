@@ -15,7 +15,6 @@ class PromptMessagesWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: message.asMap().entries.map((entry) {
@@ -33,11 +32,13 @@ class PromptMessagesWidget extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
-                    width: (msg.imagePath != null && msg.imagePath!.length == 1)
-                        ? width * 0.25
-                        : (msg.filePath != null)
-                            ? width * 0.25
-                            : width * 0.5,
+                    constraints: BoxConstraints(
+                        maxWidth: width *
+                            ((msg.imagePath != null &&
+                                    msg.imagePath!.length <= 4)
+                                ? 0.5
+                                : 0.75),
+                        minWidth: width * 0.25),
                     margin: const EdgeInsets.only(bottom: 12.0),
                     padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
@@ -79,13 +80,11 @@ class PromptMessagesWidget extends StatelessWidget {
                               ),
                               Flexible(
                                 child: Text(
-                                  ctrl.filePath.value
-                                      .split('/')
-                                      .last
-                                      .split('-')
-                                      .last,
+                                  msg.filePath!,
                                   style: const TextStyle(
-                                      color: Colors.white, fontFamily: "Cera"),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: "Cera"),
                                 ),
                               ),
                             ],
@@ -118,7 +117,7 @@ class PromptMessagesWidget extends StatelessWidget {
                       displayFullTextOnTap: true,
                       animatedTexts: [
                         TyperAnimatedText(
-                          speed: const Duration(milliseconds: 55),
+                          speed: const Duration(milliseconds: 60),
                           msg.isUser
                               ? "Prompt: ${msg.text}"
                               : "Response: ${msg.text}",

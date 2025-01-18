@@ -20,7 +20,7 @@ class ChatTitleGenerator {
   // Extract potential keywords or meaningful phrases
   static String _extractKeywords(String text) {
     // Split text into words
-    List<String> words = text.split(' ');
+    Set<String> words = text.split(' ').toSet();
     List<String> keywords = specializedKeywords(words);
 
     // Return the most relevant keyword or a combination of the top 5
@@ -39,13 +39,9 @@ class ChatTitleGenerator {
     return _extractKeywords(baseText);
   }
 
-  static List<String> specializedKeywords(List<String> words) {
+  static List<String> specializedKeywords(Set<String> words) {
     // Filter for nouns/proper nouns or special words (basic logic: use longer words, but no common stop words)
-    const stopWords = [
-      'because',
-      'however',
-      'during',
-    ];
+    const stopWords = ['because', 'however', 'during', 'please'];
     return words.where((word) {
       word = word.toLowerCase().trim();
       return word.length >= 6 && !stopWords.contains(word);
@@ -77,7 +73,6 @@ class ChatTitleGenerator {
 
     // Normalize multiple spaces to a single space
     title = title.replaceAll(RegExp(r'\s+'), ' ').trim();
-
     return title;
   }
 }

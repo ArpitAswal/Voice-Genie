@@ -37,6 +37,7 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
   void initState() {
     super.initState();
     widget.ctrl.isNewPrompt.value = false;
+    widget.ctrl.isTextPrompt.value = true;
     widget.ctrl.setCurrentChatId(newChatId: widget.promptId);
     widget.ctrl.changeChatBoxTitle(newChatTitle: widget.promptTitle);
     widget.ctrl.messages.value = widget.promptMessages.map((e) => e).toList();
@@ -48,6 +49,7 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
     widget.ctrl.setCurrentChatId(newChatId: "");
     widget.ctrl.changeChatBoxTitle(newChatTitle: "");
     widget.ctrl.isNewPrompt.value = true;
+    widget.ctrl.isTextPrompt.value = false;
     _scrollController.dispose();
   }
 
@@ -112,11 +114,18 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
           ),
         ),
       ),
-      floatingActionButton: Obx(
-        () => (widget.ctrl.isImagePrompt.value)
-            ? navigatingFloating()
-            : MultipleFloating(fabKey: fabKey2),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Obx(
+            () => (widget.ctrl.isImagePrompt.value)
+                ? navigatingFloating()
+                : MultipleFloating(fabKey: fabKey2),
+          ),
+        ),
       ),
+      floatingActionButtonLocation: ExpandableFab.location,
       body: SingleChildScrollView(
         controller: _scrollController,
         child: Column(children: [
@@ -163,7 +172,7 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
     return FloatingActionButton(
       onPressed: () async {
         widget.ctrl.isImagePrompt.value = false;
-        widget.ctrl.isTextPrompt.value = false;
+        widget.ctrl.isTextPrompt.value = true;
         widget.ctrl.imagesFileList.clear();
       },
       shape:
