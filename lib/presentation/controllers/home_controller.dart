@@ -58,8 +58,6 @@ class HomeController extends GetxController {
       true.obs; // Flag to determine if text-to-speech should stop
   final RxBool isNewPrompt = true
       .obs; // Flag to determine whether current prompt is new or old chat prompt
-  final RxBool callImagine =
-      false.obs; // Observe whether the Imagine API is called or not
   final RxList<HiveChatBoxMessages> messages =
       <HiveChatBoxMessages>[].obs; // List to hold conversation messages
   final RxList<HiveChatBox> totalChatBoxes =
@@ -192,6 +190,8 @@ class HomeController extends GetxController {
         _messageQueue.add(message.text);
       }
     }
+    _flutterTts.setCompletionHandler(
+        _onSpeakCompleted); // Sets a handler for TTS completion
     isStopped.value = false;
     await _speakNextMessage(); // Begins speaking messages in the queue
   }
@@ -301,16 +301,13 @@ class HomeController extends GetxController {
       if (input.isNotEmpty) {
         messages.add(HiveChatBoxMessages(
             text: input, isUser: true, imagePath: null, filePath: null));
+        isLoading.value = true;
 
         final response = await _service.isArtPromptAPI(input);
         if (response == "YES") {
-          callImagine.value = true;
-          isLoading.value = true;
           await callImagineAPI(
               input); // Calls Imagine API if input asks for an image
         } else {
-          callImagine.value = false;
-          isLoading.value = true;
           await sendPrompt(
               input); // Calls Gemini API if text response is expected
         }
@@ -386,6 +383,7 @@ class HomeController extends GetxController {
   Future<void> callImagineAPI(String input) async {
     try {
       final data = await _service.imagineAPI(input);
+      isLoading.value = false;
       messages.add(HiveChatBoxMessages(
           text: "Here, is a comprehensive desire image output of your prompt.",
           isUser: false,
@@ -397,15 +395,12 @@ class HomeController extends GetxController {
       saveMessagesInDB();
     } on AppException catch (e) {
       // Adds an error message if the call fails
-      callingFail(speakMsg: e.message.toString());
+      callingFail();
       AlertMessages.showSnackBar(e.message.toString());
     } catch (e) {
       // Adds an error message if the call fails
-      callingFail(speakMsg: e.toString());
+      callingFail();
       AlertMessages.showSnackBar(e.toString());
-    } finally {
-      callImagine.value = false;
-      isLoading.value = false;
     }
   }
 
