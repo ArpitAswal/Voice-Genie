@@ -2,7 +2,7 @@
 ## App Logo
 Click on a logo to download the latest version of the app apk file:
   
-<a href="https://github.com/ArpitAswal/Voice-Genie/releases/download/v1.0.0/VoiceGenie.apk"> ![ic_launcher](https://github.com/user-attachments/assets/ae14f7dc-567c-4074-b86a-81aca50c71b0)</a>
+<a href="https://github.com/ArpitAswal/Voice-Genie/releases/download/v2.00/VoiceGenie.apk"> ![ic_launcher](https://github.com/user-attachments/assets/ae14f7dc-567c-4074-b86a-81aca50c71b0)</a>
 
 # Project Title: Voice Genie
 
@@ -10,23 +10,42 @@ Description: Voice Genie is a Flutter-based mobile application that acts as a vo
 
 ## Features
 
-Text Queries: Using Gemini API with the Gemini 1.5 Flash model, Voice Genie answers user questions or prompts with insightful responses related to organization, creativity, or general information.
+Voice Interaction:
+Users can speak prompts or queries by tapping a button, and the app converts speech to text.
+Provides 80–90% accurate responses while avoiding confidential information.
 
-Art/Image Prompts: For creative visual queries, Imagine API generates relevant images or artwork, offering a unique AI art experience.
+AI-Powered Responses:
+Text-based prompts are processed using Gemini API (Gemini 1.5 Flash model).
+Art displaying from prompts is handled through the Imagine API.
+
+Image-Based Prompts:
+Users can send images as prompts.
+The AI analyzes the image and provides text-based responses with relevant information or insights about the image.
+
+PDF Querying:
+Users can upload a single PDF file.
+The app extracts and processes the content, allowing users to query specific information from the PDF and receive text-based responses.
 
 Speech-to-Text: The app converts spoken queries into text, allowing users to interact hands-free.
 
 Text-to-Speech: Users can listen to AI responses, making information accessible and providing a conversational experience.
 
-Animated Text Display: Responses are displayed in rounded containers with animated text, enhancing readability and engagement.
+Visual Response Display:
+Responses are presented in rounded, animated containers for a modern and engaging UI.
+Includes error messages for issues like missing permissions or network errors.
 
-Response Options: After receiving an AI-generated response, users can choose to:
+Response Options:
+After receiving an AI-generated response, users can choose to:
 
 Ask another question,
 Listen to the AI response from start to finish,
 Clear previous interactions and reset the screen for new prompts.
 
 Permission and Connectivity Messages: The app provides clear feedback for any permission issues (e.g., audio recording) or connectivity errors, helping users troubleshoot effortlessly.
+
+New & History Prompts: From the new version user can not just send prompts from the single screen but can send prompts from the history prompt section.
+
+Auto Prompt Title: whenever the user sends the new first prompt the app will automatically decide the prompt section title. additionally custom modify the title option available if a user does not like the auto title.
 
 ## Installation
 
@@ -58,7 +77,7 @@ flutter run
 ## Note
 . Users must grant audio record permission for the app to function, as it uses, the voice speech functionality to record the user prompt.
 
-. ImagineAPI service sometimes is not available, and for more styling images response try different style_id parameter, for more detail visit the ImagineAPI site.
+. ImagineAPI service sometimes is not available, and for more styling image responses try different style_id parameters, for more detail visit the ImagineAPI site.
 
 ## Tech Stack
 
@@ -76,11 +95,19 @@ Speech-To-Text: Ensuring it listens to all the words/sentences of the user and p
 
 Text-To-Speech: Managing the response speech by single response or full messages responses.
 
+Prompt History: Managing the new responses and old responses for a particular prompt section.
+
 ## Future Enhancements
 
 Image-Based Query Analysis: A new feature will allow users to upload images to the app. Gemini AI will then analyze the uploaded image, describing its contents to provide deeper insights or contextual explanations about the image.
 
 Enhanced AI Art Capabilities: Future updates will improve the app’s art-based prompts with more creative or style-based responses to user queries.
+
+Multi-File PDF Analysis: Enable users to upload multiple PDFs and query across all documents.
+
+## New Version Enhancement
+
+Image-Based Query Analysis: A new feature will allow users to upload images to the app. Gemini AI will then analyze the uploaded image, describing its contents to provide deeper insights or contextual explanations about the image.
 
 ## Contributing
 
@@ -134,5 +161,5 @@ If you face an issue, then open an issue in a GitHub repository.
 
 ## Design Philosophy
 
-Voice Genie is a sophisticated AI assistant designed to be an intuitive, accessible way for users to explore information and art with minimal effort. With future updates, it aims to become an even more interactive and personalized companion.
+Voice Genie is a sophisticated AI assistant designed to be an intuitive, accessible way for users to explore information and art with minimal effort. With future updates, it aims to become an even more interactive and personalized companion. Voice Genie continues to evolve into a versatile and intelligent assistant, offering seamless interaction across multiple data types while providing users with personalized and accurate responses.
 
