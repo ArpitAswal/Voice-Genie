@@ -58,6 +58,8 @@ class HomeController extends GetxController {
       true.obs; // Flag to determine if text-to-speech should stop
   final RxBool isNewPrompt = true
       .obs; // Flag to determine whether current prompt is new or old chat prompt
+  final RxBool callImagine =
+      false.obs; // Observe whether the Imagine API is called or not
   final RxList<HiveChatBoxMessages> messages =
       <HiveChatBoxMessages>[].obs; // List to hold conversation messages
   final RxList<HiveChatBox> totalChatBoxes =
@@ -299,45 +301,33 @@ class HomeController extends GetxController {
       if (input.isNotEmpty) {
         messages.add(HiveChatBoxMessages(
             text: input, isUser: true, imagePath: null, filePath: null));
-        isLoading.value = true;
 
         final response = await _service.isArtPromptAPI(input);
         if (response == "YES") {
+          callImagine.value = true;
+          isLoading.value = true;
           await callImagineAPI(
               input); // Calls Imagine API if input asks for an image
         } else {
+          callImagine.value = false;
+          isLoading.value = true;
           await sendPrompt(
               input); // Calls Gemini API if text response is expected
         }
       } else {
         // Adds a default prompt message when no input is provided
         isTextPrompt.value = true;
-        messages.add(HiveChatBoxMessages(
-            text:
-                "Please provide me with some context or a question so I can assist you.",
-            isUser: true));
-        _messageQueue.add(
-            "Please provide me with some context or a question so I can assist you.");
-        isStopped.value = false;
-        await _speakNextMessage();
+        messages.add(HiveChatBoxMessages(text: "Empty prompt", isUser: true));
         shouldTextAnimate.value = true;
-        messages.add(HiveChatBoxMessages(
-            text: "For example: Give me some Interview Tips.", isUser: false));
-        _messageQueue.add("For example: Give me some Interview Tips.");
-        if (isNewPrompt.value &&
-            messages.length == 2 &&
-            _chatBoxTitle.isEmpty) {
-          setChatBoxTitle();
-        }
-        saveMessagesInDB();
+        callingFail(
+            speakMsg:
+                "Please provide me with some context or a question so I can assist you. For example: Give me some Interview Tips.");
       }
     } on AppException catch (e) {
-      isLoading.value = false;
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+      callingFail();
       AlertMessages.showSnackBar(e.message.toString());
     } catch (e) {
-      isLoading.value = false;
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+      callingFail();
       AlertMessages.showSnackBar(e.toString());
     }
   }
@@ -368,8 +358,8 @@ class HomeController extends GetxController {
       }, onDone: () async {
         isLoading.value = false; // Ends loading state
         if (visionResponse.value.isNotEmpty) {
-          messages.add(
-              HiveChatBoxMessages(text: visionResponse.value, isUser: false));
+          messages.add(HiveChatBoxMessages(
+              text: visionResponse.value.trim(), isUser: false));
           speakTTs(visionResponse.value);
           visionResponse.value = "";
         }
@@ -381,16 +371,12 @@ class HomeController extends GetxController {
         saveMessagesInDB();
         // save message to hive db
       }).onError((error, stackTrace) {
-        isLoading.value = false; // Ends loading state
+        callingFail(speakMsg: error.toString());
         AlertMessages.showSnackBar(error.toString());
-        messages
-            .add(HiveChatBoxMessages(text: error.toString(), isUser: false));
-        speakTTs(error.toString());
       });
     } catch (e) {
-      isLoading.value = false;
+      callingFail();
       AlertMessages.showSnackBar(e.toString());
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
     } finally {
       imagesFileList.clear();
     }
@@ -400,27 +386,26 @@ class HomeController extends GetxController {
   Future<void> callImagineAPI(String input) async {
     try {
       final data = await _service.imagineAPI(input);
-      isLoading.value = false;
       messages.add(HiveChatBoxMessages(
           text: "Here, is a comprehensive desire image output of your prompt.",
           isUser: false,
           imagePath: [data],
           filePath: null));
-      speakTTs("Here, is a comprehensive desire image output of your prompt.");
       if (isNewPrompt.value && messages.length == 2 && _chatBoxTitle.isEmpty) {
         setChatBoxTitle();
       }
       saveMessagesInDB();
     } on AppException catch (e) {
       // Adds an error message if the call fails
-      isLoading.value = false;
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+      callingFail(speakMsg: e.message.toString());
       AlertMessages.showSnackBar(e.message.toString());
     } catch (e) {
       // Adds an error message if the call fails
-      isLoading.value = false;
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
+      callingFail(speakMsg: e.toString());
       AlertMessages.showSnackBar(e.toString());
+    } finally {
+      callImagine.value = false;
+      isLoading.value = false;
     }
   }
 
@@ -457,6 +442,17 @@ class HomeController extends GetxController {
       AlertMessages.showSnackBar(e.toString());
       return null;
     }
+  }
+
+  void callingFail(
+      {String speakMsg = "Sorry, I could not generate the response"}) {
+    isLoading.value = false;
+    messages.add(HiveChatBoxMessages(text: speakMsg, isUser: false));
+    speakTTs(speakMsg);
+    if (isNewPrompt.value && messages.length == 2 && _chatBoxTitle.isEmpty) {
+      setChatBoxTitle();
+    }
+    saveMessagesInDB();
   }
 
   void saveMessagesInDB() {
@@ -557,7 +553,7 @@ class HomeController extends GetxController {
           prompt: text, file: File(filePath.value), fileName: fileName);
       if (response.isNotEmpty) {
         isLoading.value = false;
-        messages.add(HiveChatBoxMessages(text: response, isUser: false));
+        messages.add(HiveChatBoxMessages(text: response.trim(), isUser: false));
         speakTTs(response);
         if (isNewPrompt.value &&
             messages.length == 2 &&
@@ -567,9 +563,8 @@ class HomeController extends GetxController {
         saveMessagesInDB();
       }
     } catch (e) {
-      isLoading.value = false;
+      callingFail();
       AlertMessages.showSnackBar(e.toString());
-      messages.add(HiveChatBoxMessages(text: "Failed", isUser: false));
     } finally {
       filePath.value = "";
     }

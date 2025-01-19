@@ -2,11 +2,10 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:get/get.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:voice_assistant/data/adapters/models_adapter.dart';
 import 'package:voice_assistant/presentation/controllers/home_controller.dart';
 import 'package:voice_assistant/widgets/prompt_container.dart';
-import 'package:voice_assistant/widgets/prompt_messages.dart';
+import 'package:voice_assistant/widgets/prompt_container_child.dart';
 import 'package:voice_assistant/widgets/virtual_assistant_image.dart';
 
 import '../../widgets/image_prompt.dart';
@@ -133,36 +132,22 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
             height: Get.height * 0.02,
           ),
           const VirtualAssistantImage(),
-          Obx(() {
-            if (widget.ctrl.isImagePrompt.value) {
-              return const ImagePrompt();
-            } else {
-              Future.microtask(_scrollToBottom);
-              return PromptContainer(
-                  child: (widget.ctrl.messages.isEmpty)
-                      ? Align(
-                          alignment: Alignment.centerRight,
-                          child: LoadingAnimationWidget.progressiveDots(
-                              color: Colors.grey.shade400, size: 40))
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            PromptMessagesWidget(
-                                ctrl: widget.ctrl,
-                                message: widget.ctrl.messages),
-                            (widget.ctrl.isLoading.value)
-                                ? Align(
-                                    alignment: Alignment.centerLeft,
-                                    child:
-                                        LoadingAnimationWidget.progressiveDots(
-                                            color: Colors.grey.shade400,
-                                            size: 40),
-                                  )
-                                : const SizedBox.shrink()
-                          ],
-                        ));
-            }
-          }),
+          Obx(() => AnimatedSwitcher(
+                duration:
+                    const Duration(milliseconds: 600), // Animation duration
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: PromptContainer(
+                  key: ValueKey<bool>(widget.ctrl.isImagePrompt.value),
+                  child: (widget.ctrl.isImagePrompt.value)
+                      ? const ImagePrompt()
+                      : promptSpace(),
+                ),
+              ))
         ]),
       ),
     );
@@ -183,5 +168,10 @@ class _PromptHistoryScreenState extends State<PromptHistoryScreen> {
         color: Colors.white,
       ),
     );
+  }
+
+  Widget promptSpace() {
+    Future.microtask(_scrollToBottom);
+    return PromptContainerChild(ctrl: widget.ctrl);
   }
 }

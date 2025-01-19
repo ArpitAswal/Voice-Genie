@@ -101,7 +101,13 @@ class NetworkRequests {
             message:
                 'Service Unavailable: The service is currently unavailable. Retry the request later',
             type: ExceptionType.api);
-      } else {
+      } else if(response.statusCode == 402){
+        throw AppException(
+          message: 'Payment Required',
+          type: ExceptionType.other
+        );
+      }
+      else {
         throw AppException(
             message: 'Exception Occur: Failed to generate an image',
             type: ExceptionType.api);

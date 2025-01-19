@@ -31,7 +31,6 @@ class ImageGridView extends StatelessWidget {
               (image) => ClipRRect(
                 borderRadius: BorderRadius.circular(10.0),
                 child: Image.file(
-                  height: height * 0.5,
                   fit: BoxFit.cover,
                   File(image),
                 ),

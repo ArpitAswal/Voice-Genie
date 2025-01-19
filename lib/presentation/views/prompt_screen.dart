@@ -2,9 +2,8 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:get/get.dart';
-import 'package:voice_assistant/widgets/prompt_messages.dart';
+import 'package:voice_assistant/widgets/prompt_container_child.dart';
 
 import '../../widgets/feature_box.dart';
 import '../../widgets/image_prompt.dart';
@@ -75,13 +74,30 @@ class _PromptScreenState extends State<PromptScreen> {
             FadeIn(
                 delay: const Duration(milliseconds: 200),
                 duration: const Duration(milliseconds: 600),
-                child: Obx(() => (ctrl.isImagePrompt.value)
-                    ? const ImagePrompt()
-                    : (!ctrl.isTextPrompt.value)
-                        ? initialPrompt()
-                        : promptSpace())),
+                child: Obx(() => AnimatedSwitcher(
+                      duration: const Duration(
+                          milliseconds: 600), // Animation duration
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      },
+                      child: PromptContainer(
+                        key: ValueKey<bool>(ctrl.isTextPrompt.value &&
+                            ctrl.isImagePrompt.value),
+                        child: (ctrl.isImagePrompt.value)
+                            ? const ImagePrompt()
+                            : (!ctrl.isTextPrompt.value)
+                                ? initialPrompt()
+                                : promptSpace(),
+                      ),
+                    ))),
             Obx(
               () => Visibility(
+                maintainAnimation: true,
+                maintainState: true,
                 visible: !ctrl.isTextPrompt.value,
                 child: SlideInLeft(
                   delay: const Duration(milliseconds: 200),
@@ -105,6 +121,8 @@ class _PromptScreenState extends State<PromptScreen> {
             ),
             Obx(
               () => Visibility(
+                maintainAnimation: true,
+                maintainState: true,
                 visible: !ctrl.isTextPrompt.value,
                 child: Column(
                   children: [
@@ -146,8 +164,7 @@ class _PromptScreenState extends State<PromptScreen> {
   }
 
   Widget initialPrompt() {
-    return PromptContainer(
-        child: AnimatedTextKit(
+    return AnimatedTextKit(
       key: UniqueKey(),
       animatedTexts: [
         TyperAnimatedText("${ctrl.greetingMessage}, what can I do for you?",
@@ -156,26 +173,12 @@ class _PromptScreenState extends State<PromptScreen> {
             textAlign: TextAlign.start),
       ],
       isRepeatingAnimation: false,
-    ));
+    );
   }
 
   Widget promptSpace() {
     Future.microtask(_scrollToBottom);
-    return PromptContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PromptMessagesWidget(message: ctrl.messages, ctrl: ctrl),
-          (ctrl.isLoading.value)
-              ? Align(
-                  alignment: Alignment.centerLeft,
-                  child: LoadingAnimationWidget.progressiveDots(
-                      color: Colors.grey.shade400, size: 40),
-                )
-              : const SizedBox.shrink()
-        ],
-      ),
-    );
+    return PromptContainerChild(ctrl: ctrl);
   }
 
   Widget navigatingFloating() {
